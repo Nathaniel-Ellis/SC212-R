@@ -1,0 +1,170 @@
+---
+title: "Prelim Analysis Figures"
+output: html_document
+---
+
+```{r}
+studperformance <- read.csv(file = "StudentsPerformance.csv")
+library(ggplot2)
+library("reshape")
+library("tidyverse")
+```
+
+```{r}
+# Box plot figures 
+
+#create vertical side-by-side boxplots
+ggplot(studperformance, aes(x=test.preparation.course, y=math.score, fill=test.preparation.course)) +
+  geom_boxplot() +
+  labs(x = "", y = "Mean math Score\n", title = "\n Mean Scores vs Test Completed \n", fill="Prep course Completion") +
+  theme(plot.title = element_text(hjust = 0.5), 
+        axis.title.x = element_text(face="bold", colour="red", size = 12),
+        axis.title.y = element_text(face="bold", colour="red", size = 12),
+        legend.title = element_text(face="bold", size = 10))
+
+#reading
+ggplot(studperformance, aes(x=test.preparation.course, y=reading.score, fill=test.preparation.course)) +
+  geom_boxplot() +
+  labs(x = "", y = "Mean reading Score\n", title = "\n Mean Scores vs Test Completed \n", fill="Prep course Completion") +
+  theme(plot.title = element_text(hjust = 0.5), 
+        axis.title.x = element_text(face="bold", colour="red", size = 12),
+        axis.title.y = element_text(face="bold", colour="red", size = 12),
+        legend.title = element_text(face="bold", size = 10))
+
+#writing
+ggplot(studperformance, aes(x=test.preparation.course, y=writing.score, fill=test.preparation.course)) +
+  geom_boxplot() +
+  labs(x = "", y = "Mean writing Score\n", title = "\n Mean Scores vs Test Completed \n", fill="Prep course Completion") +
+  theme(plot.title = element_text(hjust = 0.5), 
+        axis.title.x = element_text(face="bold", colour="red", size = 12),
+        axis.title.y = element_text(face="bold", colour="red", size = 12),
+        legend.title = element_text(face="bold", size = 10))
+```
+
+
+####################################################################################################
+
+Bar plot code
+
+```{r}
+# Have to turn the scores into a table for plotting
+
+# first select variables of interest
+df1 <- studperformance %>% 
+  select(test.preparation.course, math.score, reading.score, writing.score) %>%
+  group_by(test.preparation.course) %>%
+  summarise(mean.math = mean(math.score), mean.read = mean(reading.score), mean.write = mean(writing.score))
+
+
+# then fix them for ggplot
+df2 <- data.frame(values = c(df1$mean.math, df1$mean.read, df1$mean.write),
+                  groups = c("Mean Math Score","Mean Math Score","Mean Reading Score","Mean Reading Score","Mean Writing Score","Mean Writing Score"),
+                  Prep_Course = c(df1$test.preparation.course,df1$test.preparation.course,df1$test.preparation.course))
+
+#ggplot the table
+
+
+ggplot(data = df2, aes(x = groups, y = values, fill = Prep_Course)) +
+  geom_bar(stat = "identity", position = position_dodge(), alpha = 0.75)  +
+  ylim(0,100) +
+  geom_text(aes(label = Prep_Course), vjust = 2.5,
+             position = position_dodge(.9), size = 3) +
+  labs(x = "\n Scores by subject", y = "Mean Score\n", title = "\n Mean Scores vs Test Completed \n") +
+  theme(plot.title = element_text(hjust = 0.5), 
+        axis.title.x = element_text(face="bold", colour="red", size = 12),
+        axis.title.y = element_text(face="bold", colour="red", size = 12),
+        legend.title = element_text(face="bold", size = 10))
+
+
+```
+
+##########################################################################
+
+```{r}
+# whether or not the estimates are different between parental values.
+# plot the actual difference in means (for both) between subset and total average
+
+# among children of bachelors  what is the difference in average scores  between those who did and did not do the course.
+diff_calculator <- function(subgroup) {
+  diff_scores <- studperformance %>%
+    select(math.score, test.preparation.course) %>%
+    filter(parental.level.of.education == subgroup) %>%
+    group_by(test.preparation.course) %>%
+    summarize(mea = mean(math.score))
+  print(subgroup)
+  print(diff_scores[1,2]-diff_scores[2,2])
+}
+
+diff_calculator("some high school")
+
+subgroups = c("bachelor's degree", "some college", "master's degree", "associate's degree", "high school", "some high school", "notaccountedfor" )
+
+```
+
+```{r}
+for (group in subgroups) {
+  diff_calculator(group)
+}
+
+
+diffmeansmath = c(6.379831, 6.561928, 1.292308, 6.25784, 4.007143, 5.622867, 5.617649			)
+diffmeansread = c(6.128019, 9.899765, 4.352564, 8.313589, 4.389286,	7.036287, 7.359587	)
+diffmeanswrite = c(8.709541, 11.647, 6.689744, 10.97422, 7.846429, 9.608734, 9.914322		)
+diffmeansdf <- data.frame("ParEdLvl" = subgroups, "diffmeansmath" = diffmeansmath, "diffmeansread" = diffmeansread, "diffmeanswrite" = diffmeanswrite )
+
+
+```
+
+```{r}
+# Differences in means plots
+# figures 3 a b and c
+
+
+ggplot(data = diffmeansdf, aes(x = ParEdLvl, y = diffmeansmath, fill=ParEdLvl)) +
+  geom_bar(stat = "identity", position = position_dodge(), alpha = 0.75)  +
+  ylim(0,10) +
+  geom_text(aes(label = diffmeansmath), vjust = -1,
+             position = position_dodge(.9), size = 3) +
+  labs(x = "Parent education level", y = "Diff in Mean Score\n", title = "\n Difference in means in math score by parent ed level \n") +
+  theme(plot.title = element_text(hjust = 0.5), 
+        axis.title.x = element_text(face="bold", colour="red", size = 12),
+        axis.title.y = element_text(face="bold", colour="red", size = 12),
+        legend.title = element_text(face="bold", size = 10), 
+        axis.text.x = element_text(angle = 10, vjust = 1, hjust=0.5)) +
+  scale_fill_manual( values = c( "notaccountedfor"="red" ), guide = FALSE )
+
+```
+```{r}
+# Figure 3b
+
+ggplot(data = diffmeansdf, aes(x = ParEdLvl, y = diffmeansread, fill=ParEdLvl)) +
+  geom_bar(stat = "identity", position = position_dodge(), alpha = 0.75)  +
+  ylim(0,11) +
+  geom_text(aes(label = diffmeansread), vjust = -1,
+             position = position_dodge(.9), size = 3) +
+  labs(x = "Parent education level", y = "Diff in Mean Score\n", title = "\n Difference in means in reading score by parent ed level \n") +
+  theme(plot.title = element_text(hjust = 0.5), 
+        axis.title.x = element_text(face="bold", colour="red", size = 12),
+        axis.title.y = element_text(face="bold", colour="red", size = 12),
+        legend.title = element_text(face="bold", size = 10), 
+        axis.text.x = element_text(angle = 10, vjust = 1, hjust=0.5)) +
+  scale_fill_manual( values = c( "notaccountedfor"="red" ), guide = FALSE )
+```
+
+
+```{r}
+# Figure 3c
+
+ggplot(data = diffmeansdf, aes(x = ParEdLvl, y = diffmeanswrite, fill=ParEdLvl)) +
+  geom_bar(stat = "identity", position = position_dodge(), alpha = 0.75)  +
+  ylim(0,13) +
+  geom_text(aes(label = diffmeanswrite), vjust = -1,
+             position = position_dodge(.9), size = 3) +
+  labs(x = "Parent education level", y = "Diff in Mean Score\n", title = "\n Difference in means in writing score by parent ed level \n") +
+  theme(plot.title = element_text(hjust = 0.5), 
+        axis.title.x = element_text(face="bold", colour="red", size = 12),
+        axis.title.y = element_text(face="bold", colour="red", size = 12),
+        legend.title = element_text(face="bold", size = 10), 
+        axis.text.x = element_text(angle = 10, vjust = 1, hjust=0.5)) +
+  scale_fill_manual( values = c( "notaccountedfor"="red" ), guide = FALSE )
+```

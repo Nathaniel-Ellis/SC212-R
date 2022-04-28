@@ -1,0 +1,488 @@
+---
+title: "prelim analysis"
+output: html_document
+---
+
+# 
+```{r}
+studperformance <- read.csv(file = "StudentsPerformance.csv")
+library(ggplot2)
+library("reshape")
+library("tidyverse")
+```
+
+# running anova
+
+
+```{r}
+# is there a difference between math score and gender
+my.anova <- aov(studperformance$math.score ~ studperformance$gender)
+summary(my.anova)
+# output: 28.98
+# p 9.12e-08
+```
+
+```{r}
+# is there a difference between math score and level ed
+my.anova <- aov(studperformance$math.score ~ studperformance$parental.level.of.education)
+summary(my.anova)
+#t: 6.522
+#5.59e-06
+```
+
+```{r}
+# is there a difference between math score and lunch
+my.anova <- aov(studperformance$math.score ~ studperformance$lunch)
+summary(my.anova)
+#t: 140.1
+#<2e-16
+```
+
+```{r}
+# is there a difference between math score and test prep
+my.anova <- aov(studperformance$math.score ~ studperformance$test.preparation.course)
+summary(my.anova)
+#t: 32.54
+#1.54e-08
+```
+
+
+#############################################################
+
+
+```{r}
+# is there a difference between reading score and gender
+my.anova <- aov(studperformance$reading.score ~ studperformance$gender)
+summary(my.anova)
+# output: 63.35
+# p 4.68e-15
+```
+
+```{r}
+# is there a difference between reading score and level ed
+my.anova <- aov(studperformance$reading.score ~ studperformance$parental.level.of.education)
+summary(my.anova)
+#t: 9.289
+#1.17e-08
+```
+
+```{r}
+# is there a difference between reading score and lunch
+my.anova <- aov(studperformance$reading.score ~ studperformance$lunch)
+summary(my.anova)
+#t: 55.52
+# 2e-13
+```
+
+```{r}
+# is there a difference between reading score and test prep
+my.anova <- aov(studperformance$reading.score ~ studperformance$test.preparation.course)
+summary(my.anova)
+#t: 61.96
+#9.08e-15
+```
+
+
+#############################################################
+
+
+```{r}
+# is there a difference between writing score and gender
+my.anova <- aov(studperformance$writing.score ~ studperformance$gender)
+summary(my.anova)
+# output: 99.59
+# p <2e-16
+```
+
+```{r}
+# is there a difference between writing score and level ed
+my.anova <- aov(studperformance$writing.score ~ studperformance$parental.level.of.education)
+summary(my.anova)
+#t: 14.44
+# 1.12e-13
+```
+
+```{r}
+# is there a difference between writing score and lunch
+my.anova <- aov(studperformance$writing.score ~ studperformance$lunch)
+summary(my.anova)
+#t: 64.16
+#3.19e-15
+```
+
+```{r}
+# is there a difference between reading score and test prep
+my.anova <- aov(studperformance$writing.score ~ studperformance$test.preparation.course)
+summary(my.anova)
+#t: 108.4
+#<2e-16
+```
+
+
+
+####################################################################################################
+
+Box plot code
+
+```{r}
+#create vertical side-by-side boxplots
+ggplot(studperformance, aes(x=test.preparation.course, y=math.score, fill=test.preparation.course)) +
+  geom_boxplot() +
+  labs(x = "", y = "Mean math Score\n", title = "\n Mean Scores vs Test Completed \n", fill="Prep course Completion") +
+  theme(plot.title = element_text(hjust = 0.5), 
+        axis.title.x = element_text(face="bold", colour="red", size = 12),
+        axis.title.y = element_text(face="bold", colour="red", size = 12),
+        legend.title = element_text(face="bold", size = 10))
+
+#reading
+ggplot(studperformance, aes(x=test.preparation.course, y=reading.score, fill=test.preparation.course)) +
+  geom_boxplot() +
+  labs(x = "", y = "Mean reading Score\n", title = "\n Mean Scores vs Test Completed \n", fill="Prep course Completion") +
+  theme(plot.title = element_text(hjust = 0.5), 
+        axis.title.x = element_text(face="bold", colour="red", size = 12),
+        axis.title.y = element_text(face="bold", colour="red", size = 12),
+        legend.title = element_text(face="bold", size = 10))
+
+#writing
+ggplot(studperformance, aes(x=test.preparation.course, y=writing.score, fill=test.preparation.course)) +
+  geom_boxplot() +
+  labs(x = "", y = "Mean writing Score\n", title = "\n Mean Scores vs Test Completed \n", fill="Prep course Completion") +
+  theme(plot.title = element_text(hjust = 0.5), 
+        axis.title.x = element_text(face="bold", colour="red", size = 12),
+        axis.title.y = element_text(face="bold", colour="red", size = 12),
+        legend.title = element_text(face="bold", size = 10))
+```
+
+
+####################################################################################################
+
+Bar plot code
+
+```{r}
+# Have to turn the scores into a table for plotting
+
+# first select variables of interest
+df1 <- studperformance %>% 
+  select(test.preparation.course, math.score, reading.score, writing.score) %>%
+  group_by(test.preparation.course) %>%
+  summarise(mean.math = mean(math.score), mean.read = mean(reading.score), mean.write = mean(writing.score))
+
+
+# then fix them for ggplot
+df2 <- data.frame(values = c(df1$mean.math, df1$mean.read, df1$mean.write),
+                  groups = c("Mean Math Score","Mean Math Score","Mean Reading Score","Mean Reading Score","Mean Writing Score","Mean Writing Score"),
+                  Prep_Course = c(df1$test.preparation.course,df1$test.preparation.course,df1$test.preparation.course))
+
+#ggplot the table
+
+
+ggplot(data = df2, aes(x = groups, y = values, fill = Prep_Course)) +
+  geom_bar(stat = "identity", position = position_dodge(), alpha = 0.75)  +
+  ylim(0,100) +
+  geom_text(aes(label = Prep_Course), vjust = 2.5,
+             position = position_dodge(.9), size = 3) +
+  labs(x = "\n Scores by subject", y = "Mean Score\n", title = "\n Mean Scores vs Test Completed \n") +
+  theme(plot.title = element_text(hjust = 0.5), 
+        axis.title.x = element_text(face="bold", colour="red", size = 12),
+        axis.title.y = element_text(face="bold", colour="red", size = 12),
+        legend.title = element_text(face="bold", size = 10))
+
+
+```
+
+
+
+##########################################################################################
+
+# Paired t tests for each score
+
+```{r}
+v1 <- studperformance %>%
+  filter(test.preparation.course == "none") %>%
+  select(math.score)
+v2 <- studperformance %>%
+  filter(test.preparation.course != "none") %>%
+  select(math.score)
+
+t1 <- t.test(v1,v2,paired=FALSE)
+print(t1)
+
+summary(v1) # those who didn't take the course
+summary(v2) # those who did take the course
+```
+
+
+
+```{r}
+v1 <- studperformance %>%
+  filter(test.preparation.course == "none") %>%
+  select(reading.score)
+v2 <- studperformance %>%
+  filter(test.preparation.course != "none") %>%
+  select(reading.score)
+
+t1 <- t.test(v1,v2,paired=FALSE)
+print(t1)
+
+```
+
+
+```{r}
+v1 <- studperformance %>%
+  filter(test.preparation.course == "none") %>%
+  select(writing.score)
+v2 <- studperformance %>%
+  filter(test.preparation.course != "none") %>%
+  select(writing.score)
+
+t1 <- t.test(v1,v2,paired=FALSE)
+print(t1)
+
+```
+
+```{r}
+v1 <- studperformance %>%
+  filter(test.preparation.course == "none") %>%
+  select(writing.score)
+v2 <- studperformance %>%
+  filter(test.preparation.course != "none") %>%
+  select(writing.score)
+
+t1 <- t.test(v1,v2,paired=FALSE)
+print(t1)
+
+```
+
+
+#####################################################################################################
+
+# get the mean silly funny hahahaha
+
+```{r}
+
+```
+
+
+######################################################################################################
+
+# chi squared calculations
+
+```{r}
+chitable <- table(studperformance$gender, studperformance$test.preparation.course)
+
+
+chi.sq <- chisq.test(chitable)
+chi.sq
+```
+
+
+```{r}
+chitable <- table(studperformance$parental.level.of.education, studperformance$test.preparation.course)
+
+
+chi.sq <- chisq.test(chitable)
+chi.sq
+```
+
+
+```{r}
+chitable <- table(studperformance$lunch, studperformance$test.preparation.course)
+
+
+chi.sq <- chisq.test(chitable)
+chi.sq
+```
+
+
+############################################################################################
+
+# Stratified analysis
+
+```{r}
+
+
+# pass in name of categorical variable and name of 
+ttestbasic <- function(confounder, examtype) {
+  
+  responses <- studperformance %>% 
+  select(confounder) %>%
+  unique()
+  responses <- responses[,1] # gets all of the subgroups of the categorical variable
+  
+  
+  for (subgroup in responses) {
+
+    
+    # create the first vector: same subgroup, having not taken the prep course
+    iv1 <- studperformance %>% select(confounder)
+    iv1 <- iv1==subgroup
+    iv2a <- studperformance$test.preparation.course=="none"
+    indexingvector <- Reduce("&", list(iv1, iv2a))
+    
+
+    sub1 <- studperformance %>% select(examtype)
+    sub1 <- sub1[ indexingvector ] # the first group
+    
+
+    # create the second dataset: same subgroup, having taken the prep course
+    iv2b <- studperformance$test.preparation.course!="none"
+    indexingvector2 <- Reduce("&", list(iv1, iv2b)) # creation of second indexing vector
+
+    sub2 <- studperformance %>% select(examtype)
+    sub2 <- sub2[ indexingvector2 ]
+    
+    
+    ttestsub1 <- t.test(sub1,sub2,paired=FALSE)
+   
+    print(paste0("T Test for , ", examtype, " against ", confounder, ", specifying ", subgroup))
+    print(ttestsub1)
+
+    
+    
+  }
+  
+print(paste0("T Test for general, ", examtype))
+  # for the general one, no confounder
+iv2a <- studperformance$test.preparation.course=="none"
+  
+sub1 <- studperformance %>%  
+  select(examtype)
+sub1 <- sub1[iv2a,]
+
+iv2b <- studperformance$test.preparation.course!="none"
+
+sub2  <- studperformance %>%  
+  select(examtype)
+sub2 <- sub2[iv2b,]
+
+ttestsub1 <- t.test(sub1,sub2,paired=FALSE)
+print(ttestsub1)
+    
+}
+
+
+```
+
+
+
+```{r}
+ttestbasic("parental.level.of.education", "writing.score")
+```
+
+
+
+######################################################################################################
+
+# Plot the stratified analysis
+
+```{r}
+# whether or not the estimates are different between parental values.
+# plot the actual difference in means (for both) between subset and total average
+
+# among children of bachelors  what is the difference in average scores  between those who did and did not do the course.
+diff_calculator <- function(subgroup) {
+  diff_scores <- studperformance %>%
+    select(math.score, test.preparation.course) %>%
+    filter(parental.level.of.education == subgroup) %>%
+    group_by(test.preparation.course) %>%
+    summarize(mea = mean(math.score))
+  print(subgroup)
+  print(diff_scores[1,2]-diff_scores[2,2])
+}
+
+diff_calculator("some high school")
+
+subgroups = c("bachelor's degree", "some college", "master's degree", "associate's degree", "high school", "some high school", "notaccountedfor" )
+
+```
+
+```{r}
+for (group in subgroups) {
+  diff_calculator(group)
+}
+
+
+diffmeansmath = c(6.379831, 6.561928, 1.292308, 6.25784, 4.007143, 5.622867, 5.617649			)
+diffmeansread = c(6.128019, 9.899765, 4.352564, 8.313589, 4.389286,	7.036287, 7.359587	)
+diffmeanswrite = c(8.709541, 11.647, 6.689744, 10.97422, 7.846429, 9.608734, 9.914322		)
+diffmeansdf <- data.frame("ParEdLvl" = subgroups, "diffmeansmath" = diffmeansmath, "diffmeansread" = diffmeansread, "diffmeanswrite" = diffmeanswrite )
+
+
+```
+
+
+```{r}
+
+
+
+ggplot(data = diffmeansdf, aes(x = ParEdLvl, y = diffmeansmath, fill=ParEdLvl)) +
+  geom_bar(stat = "identity", position = position_dodge(), alpha = 0.75)  +
+  ylim(0,10) +
+  geom_text(aes(label = diffmeansmath), vjust = -1,
+             position = position_dodge(.9), size = 3) +
+  labs(x = "Parent education level", y = "Diff in Mean Score\n", title = "\n Difference in means in math score by parent ed level \n") +
+  theme(plot.title = element_text(hjust = 0.5), 
+        axis.title.x = element_text(face="bold", colour="red", size = 12),
+        axis.title.y = element_text(face="bold", colour="red", size = 12),
+        legend.title = element_text(face="bold", size = 10), 
+        axis.text.x = element_text(angle = 10, vjust = 1, hjust=0.5)) +
+  scale_fill_manual( values = c( "notaccountedfor"="red" ), guide = FALSE )
+
+```
+```{r}
+
+ggplot(data = diffmeansdf, aes(x = ParEdLvl, y = diffmeansread, fill=ParEdLvl)) +
+  geom_bar(stat = "identity", position = position_dodge(), alpha = 0.75)  +
+  ylim(0,11) +
+  geom_text(aes(label = diffmeansread), vjust = -1,
+             position = position_dodge(.9), size = 3) +
+  labs(x = "Parent education level", y = "Diff in Mean Score\n", title = "\n Difference in means in reading score by parent ed level \n") +
+  theme(plot.title = element_text(hjust = 0.5), 
+        axis.title.x = element_text(face="bold", colour="red", size = 12),
+        axis.title.y = element_text(face="bold", colour="red", size = 12),
+        legend.title = element_text(face="bold", size = 10), 
+        axis.text.x = element_text(angle = 10, vjust = 1, hjust=0.5)) +
+  scale_fill_manual( values = c( "notaccountedfor"="red" ), guide = FALSE )
+```
+
+
+```{r}
+
+ggplot(data = diffmeansdf, aes(x = ParEdLvl, y = diffmeanswrite, fill=ParEdLvl)) +
+  geom_bar(stat = "identity", position = position_dodge(), alpha = 0.75)  +
+  ylim(0,13) +
+  geom_text(aes(label = diffmeanswrite), vjust = -1,
+             position = position_dodge(.9), size = 3) +
+  labs(x = "Parent education level", y = "Diff in Mean Score\n", title = "\n Difference in means in writing score by parent ed level \n") +
+  theme(plot.title = element_text(hjust = 0.5), 
+        axis.title.x = element_text(face="bold", colour="red", size = 12),
+        axis.title.y = element_text(face="bold", colour="red", size = 12),
+        legend.title = element_text(face="bold", size = 10), 
+        axis.text.x = element_text(angle = 10, vjust = 1, hjust=0.5)) +
+  scale_fill_manual( values = c( "notaccountedfor"="red" ), guide = FALSE )
+```
+
+```{r}
+
+
+masterbarslower <- c(-9.599944 )
+masterbarsupper <- c(7.015328)
+
+nafbarslower
+nafbarsupper
+  
+ggplot(data, aes(x, y)) +        # ggplot2 plot with confidence intervals
+  geom_point() +
+  geom_errorbar(aes(ymin = lower, ymax = upper))
+```
+
+```{r}
+studperformance %>%
+  select(parental.level.of.education) %>%
+  filter(parental.level.of.education == "master's degree") %>%
+  count()
+
+59/1000
+```
+
+

@@ -1,0 +1,180 @@
+---
+title: "stratified analysis"
+output: html_document
+---
+
+```{r}
+studperformance <- read.csv(file = "StudentsPerformance.csv")
+library(ggplot2)
+library("reshape")
+library("tidyverse")
+```
+
+
+
+############################################################################################
+
+# Stratified analysis
+
+```{r}
+# take t tests for each exam score
+# stratified analysis for literally only the gender and math. 
+
+# t test for math with group 1
+print("male")
+sub1a <- studperformance %>%  # 
+  select(math.score, gender, test.preparation.course) %>%
+  filter(gender == "male") %>%
+  filter(test.preparation.course == "none") %>%
+  select(math.score)
+
+sub1b  <- studperformance %>%  # 
+  select(math.score, gender, test.preparation.course) %>%
+  filter(gender == "male") %>%
+  filter(test.preparation.course != "none") %>%
+  select(math.score)
+
+ttestsub1 <- t.test(sub1a,sub1b,paired=FALSE)
+print(ttestsub1)
+
+# t test for math with group 2
+
+print("female")
+sub1a <- studperformance %>%  # 
+  select(math.score, gender, test.preparation.course) %>%
+  filter(gender != "male") %>%
+  filter(test.preparation.course == "none") %>%
+  select(math.score)
+
+sub1b  <- studperformance %>%  # 
+  select(math.score, gender, test.preparation.course) %>%
+  filter(gender != "male") %>%
+  filter(test.preparation.course != "none") %>%
+  select(math.score)
+
+ttestsub1 <- t.test(sub1a,sub1b,paired=FALSE)
+print(ttestsub1)
+
+# t test for math disregarding subgroups
+
+sub1a <- studperformance %>%  # 
+  select(math.score, test.preparation.course) %>%
+  filter(test.preparation.course == "none") %>%
+  select(math.score)
+
+sub1b  <- studperformance %>%  # 
+  select(math.score, test.preparation.course) %>%
+  filter(test.preparation.course != "none") %>%
+  select(math.score)
+
+ttestsub1 <- t.test(sub1a,sub1b,paired=FALSE)
+print(ttestsub1)
+
+
+```
+
+
+```{r}
+# pass in name of categorical variable and name of 
+ttestbasic <- function(confounder, examtype) {
+  
+  responses <- studperformance %>% 
+  select(confounder) %>%
+  unique()
+  responses <- responses[,1] # gets all of the subgroups of the categorical variable
+  
+  
+  for (subgroup in responses) {
+
+    
+    # create the first vector: same subgroup, having not taken the prep course
+    iv1 <- studperformance %>% select(confounder)
+    iv1 <- iv1==subgroup
+    iv2a <- studperformance$test.preparation.course=="none"
+    indexingvector <- Reduce("&", list(iv1, iv2a))
+    
+
+    sub1 <- studperformance %>% select(examtype)
+    sub1 <- sub1[ indexingvector ] # the first group
+    
+
+    # create the second dataset: same subgroup, having taken the prep course
+    iv2b <- studperformance$test.preparation.course!="none"
+    indexingvector2 <- Reduce("&", list(iv1, iv2b)) # creation of second indexing vector
+
+    sub2 <- studperformance %>% select(examtype)
+    sub2 <- sub2[ indexingvector2 ]
+    
+    
+    ttestsub1 <- t.test(sub1,sub2,paired=FALSE)
+   
+    print(paste0("T Test for , ", examtype, " against ", confounder, ", specifying ", subgroup))
+    print(ttestsub1)
+
+    
+    
+  }
+  
+print(paste0("T Test for general, ", examtype))
+  # for the general one, no confounder
+iv2a <- studperformance$test.preparation.course=="none"
+  
+sub1 <- studperformance %>%  
+  select(examtype)
+sub1 <- sub1[iv2a,]
+
+iv2b <- studperformance$test.preparation.course!="none"
+
+sub2  <- studperformance %>%  
+  select(examtype)
+sub2 <- sub2[iv2b,]
+
+ttestsub1 <- t.test(sub1,sub2,paired=FALSE)
+print(ttestsub1)
+    
+}
+
+
+```
+
+```{r}
+ttestbasic(confounder = "gender", examtype = "math.score")
+
+```
+
+
+```{r}
+table(studperformance$gender, studperformance$test.preparation.course)
+# sub1 should be examtype with those who of subgroup a (male) who took the course (174)
+# sub2 should be examtype with those who of subgroup a (male) who did not take the course (308)
+```
+
+```{r}
+responses <- studperformance %>% 
+  select("parental.level.of.education") %>%
+  unique()
+  responses <- responses[,1] # gets all of the subgroups of the categorical variable
+  
+
+```
+
+```{r}
+
+confounder1 <- "gender"
+subgroup1 <- "male"
+vartype <- "math.score"
+
+
+# we should get 308 for males with no prep course
+
+iv1 <- studperformance %>% select(confounder1)
+iv1 <- iv1==subgroup1
+iv2a <- studperformance$test.preparation.course=="none"
+indexingvector <- Reduce("&", list(iv1, iv2a))
+
+table(the)
+
+j <- studperformance$vartype
+k <- j[indexingvector]
+```
+
